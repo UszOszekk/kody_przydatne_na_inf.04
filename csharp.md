@@ -1132,10 +1132,6 @@ string SzyfrCezara(string tekst, int przesuniecie)
 ```
 *Do odszyfrowania podaj przesunięcie ujemne.*
 
-# Algorytmy i podstawy programowania w C#
-
-<!-- ...poprzednie algorytmy ... -->
-
 ## 45. Tworzenie klas i obiektów
 
 **Klasa** to szablon (model) opisujący strukturę i zachowanie obiektów. Klasa określa jakie dane (pola, właściwości) i funkcje (metody) będą miały jej obiekty.
