@@ -1366,3 +1366,148 @@ ZapiszDoPliku("wynik.txt", tekst);
 - Obie funkcje są w klasie `System.IO.File` (dodaj `using System.IO;` na początku pliku).
 - Jeśli plik nie istnieje, `ReadAllLines` zgłosi wyjątek – obsłuż to przez `try-catch` jeśli chcesz zabezpieczyć program.
 - `WriteAllLines` utworzy plik jeśli go nie ma, albo nadpisze, jeśli jest.
+
+---
+## UNIT TESTY W C#
+
+1) Jak dodać projekt testowy (GUI) (Projekt testowy dodajemy do gotowego projektu)
+- Otwórz solution w Visual Studio.
+- Prawy klik na Solution → Add → New Project...
+- Wyszukaj "mstest" → wybierz "MSTest Test Project" → Next → nazwij np. MyApp.Tests → Create. !!PAMIETAJ ŻE WERSJA NET TESTU I PROJEKTU MUSI SIĘ ZGADZAĆ!!
+- W projekcie testowym prawy klik Dependencies/References → Add Project Reference → zaznacz projekt aplikacji → OK.
+
+2) Co musi być w projekcie testowym (nuget)
+Szablon zwykle dodaje:
+- Microsoft.NET.Test.Sdk
+- MSTest.TestAdapter
+- MSTest.TestFramework
+
+Jeśli brak — prawy klik na projekt → Manage NuGet Packages → Browse → zainstaluj powyższe.
+
+
+Przykłady kodu:
+
+```csharp
+// MyApp/Calculator.cs
+namespace MyApp;
+public class Calculator
+{
+    public int Add(int a, int b){
+       return a + b;
+    }
+
+    public int Divide(int a, int b)
+    {
+        if (b == 0) throw new System.DivideByZeroException();
+        return a / b;
+    }
+}
+```
+
+```csharp
+// MyApp.Tests/CalculatorTests.cs
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MyApp;
+using System;
+
+namespace MyApp.Tests;
+
+[TestClass]
+public class CalculatorTests
+{
+    [TestMethod]
+    public void Add_TwoNumbers_ReturnsSum()
+    {
+        // Arrange
+        var calc = new Calculator();
+        // Act
+        var result = calc.Add(2, 3);
+        // Assert
+        Assert.AreEqual(5, result);
+    }
+
+    [TestMethod]
+    public void Divide_ByZero_Throws()
+    {
+        var calc = new Calculator();
+        Assert.ThrowsException<DivideByZeroException>(() => calc.Divide(5, 0));
+    }
+}
+```
+
+4) Uruchamianie i debug (Visual Studio)
+- Otwórz Test → Test Explorer.
+- Kliknij Run All albo kliknij prawym na pojedynczy test → Run/Debug Selected Tests.
+- Aby debugować: ustaw breakpoint i wybierz Debug Selected Tests.
+
+5) Najczęstsze błędy i szybkie naprawy
+
+- Testy nie są wykrywane w Test Explorer
+  - Sprawdź, że w projekcie testowym są pakiety: Microsoft.NET.Test.Sdk, MSTest.TestAdapter, MSTest.TestFramework.
+  - Sprawdź TargetFramework (niektóre kombinacje mogą być nieobsługiwane). Ustaw taki sam lub kompatybilny framework jak projekt aplikacji.
+  - Rebuild Solution, odśwież Test Explorer, zrestartuj Visual Studio jeśli trzeba.
+
+- Błąd: nie widzi klas/metod z projektu aplikacji
+  - Upewnij się, że dodałeś Project Reference (Add → Reference → Projects). Nie dodawaj ręcznie plików DLL z bin\.
+  - Jeśli testujesz typy internal: w projekcie aplikacji dodaj:
+    ```csharp
+    using System.Runtime.CompilerServices;
+    [assembly: InternalsVisibleTo("MyApp.Tests")]
+    ```
+    lub dodaj odpowiednią frazę w AssemblyInfo.
+
+- Błędy kompilacji w teście
+  - Sprawdź komunikaty kompilatora (Error List). Często brak importu namespace lub niezgodność wersji pakietów.
+  - Upewnij się, że testowy csproj targetuje zgodny framework i że ProjectReference ścieżka jest poprawna.
+
+- Test rzuca wyjątkiem zamiast asercji
+  - Sprawdź stack trace w Test Explorer → kliknij wynik testu → zobacz output.
+  - Użyj Assert.ThrowsException<T>() do testowania wyjątków.
+
+- Problem z debugowaniem (breakpointy nie łapią)
+  - Upewnij się, że konfiguracja jest Debug (nie Release).
+  - Rebuild, usuń pliki bin/obj jeśli podejrzane.
+  - Czasami Visual Studio wymaga restartu.
+
+- Testy zależne od środowiska (flaky tests)
+  - Izoluj: mockuj zewnętrzne zależności (np. bazy, sieć).
+  - Użyj ustawień w [TestInitialize] do przygotowania stanu, [TestCleanup] do sprzątania.
+
+6) Przydatne krótkie wskazówki (pigułka)
+- Struktura testu: Arrange — Act — Assert.
+- Nazewnictwo: Metoda_Warunek_OczekiwanyRezultat (np. Add_NegativeAndPositive_ReturnsCorrect).
+- Jeden scenariusz = jeden test.
+- Używaj DataTestMethod + DataRow do parametrów, gdy trzeba.
+- Do mocków: zainstaluj Moq (Manage NuGet Packages → Moq) i mockuj zależności.
+
+7) Polecenia CLI (opcjonalnie)
+- dotnet test (uruchamia testy z poziomu konsoli)
+- dotnet test --filter "FullyQualifiedName~MyApp.Tests.CalculatorTests.Add_TwoNumbers_ReturnsSum"
+
+Co zrobiłem:
+- Przygotowałem zwięzłą i praktyczną ściągę z przykładami kodu, plikiem csproj dla projektu testowego i listą najczęstszych błędów wraz z szybkimi naprawami.
+
+Co dalej (konkretnie):
+- Jeśli chcesz, wklej zawartość Twojego projektu aplikacji (MyApp.csproj) i/lub projektu testowego — sprawdzę i podam dokładne poprawki (np. dopasowanie TargetFramework, brakujące pakiety, InternalsVisibleTo).
+- Mogę też wygenerować gotowy folder z plikami (kopiowalne) dopasowany do Twojego TargetFramework — wklej jego wartość (np. net6.0).
+
+
+```xml
+<!-- MyApp.Tests/MyApp.Tests.csproj -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework> <!-- dopasuj do projektu -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.*" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyApp\MyApp.csproj" />
+  </ItemGroup>
+</Project>
+```
