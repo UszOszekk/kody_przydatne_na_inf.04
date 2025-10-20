@@ -1441,7 +1441,7 @@ public class CalculatorTests
 - Aby debugować: ustaw breakpoint i wybierz Debug Selected Tests.
 
 5) Najczęstsze błędy i szybkie naprawy
--
+
 - Testy nie są wykrywane w Test Explorer
   - Sprawdź, że w projekcie testowym są pakiety: Microsoft.NET.Test.Sdk, MSTest.TestAdapter, MSTest.TestFramework.
   - Sprawdź TargetFramework (niektóre kombinacje mogą być nieobsługiwane). Ustaw taki sam lub kompatybilny framework jak projekt aplikacji.
